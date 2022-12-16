@@ -6,7 +6,7 @@ cartas = [
         ("As♣",1),("2♣",2),("3♣",3),("4♣",4),("5♣",5),("6♣",6),("7♣",7),("10♣",0.5),("11♣",0.5),("12♣",0.5)
     ]
 
-def barajear():
+def barajear()->list:
     """_barajear_
         barajea el maso con la función random.randint
     Returns:

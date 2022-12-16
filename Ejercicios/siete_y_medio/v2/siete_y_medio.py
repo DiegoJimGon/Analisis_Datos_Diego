@@ -1,74 +1,95 @@
-import random,time
+import random
+import time
 import utilidades as utl
-#  guardar cartas barajeadas
+
 cartas_barajeadas = utl.barajear()
-print(cartas_barajeadas)
 
-# crear jugadores con diccionario
-j1 = {
-    "nombre":"Alfonso",
-    "puntos":0,
-    "cartas":[]}
+def crearJugador(nombre: str, humano: bool):
+    jugador = {
+        "nombre": nombre,
+        "puntos": 0,
+        "cartas": [],
+        "humano": humano
+    }
+    return jugador
 
-j2 = {"nombre":"IA:Polaris",
-    "puntos":0,
-    "cartas":[]}
+def pedirCarta() -> tuple:
+    return cartas_barajeadas.pop()
 
-# Jugador1 pide cartas
-pv_1 = True
 
-while(True):
-    # mostrar nombre
-    print("Turno:",j1["nombre"])
-    if(pv_1):
-        carta = cartas_barajeadas.pop()
-        j1["cartas"].append(carta)
-        j1["puntos"]+=carta[1]
-        print(j1["cartas"])
-        pv_1 = False
-    if(int(input("Quieres cartas 1, sino 0\n"))):
-        carta = cartas_barajeadas.pop()
-        j1["cartas"].append(carta)
-        j1["puntos"]+=carta[1]
-        print(j1["cartas"])
-        # detenerse
-        input()
+def iniciar():
+    nombre = input("Ingresa tu nombre: ")
+    jugador1 = crearJugador(nombre, True)
+    jugador2 = crearJugador("Polaris", False)
+    ganador = inicia_el_juego(jugador1, jugador2)
+    if(ganador.get("nombre","no hay ganador")!="no hay ganador"):
+        print("El ganador es",ganador["nombre"])
     else:
-        break
-print(j1["cartas"])
+        print(ganador["mensaje"])
 
-# CPU pide cartas
-pv_cpu = True
-while(j2["puntos"]<7.5):
-    print("Turno",j2["nombre"])
-    if(pv_cpu):
-        carta = cartas_barajeadas.pop()
-        j2["cartas"].append(carta)
-        j2["puntos"]+=carta[1]
-        print(j2["cartas"])
-    print("Quieres cartas?")
-    time.sleep(2)
-    pedir = random.random()>=0.5
-    print("Si" if pedir else "No")
-    if(pedir):
-        carta = cartas_barajeadas.pop()
-        j2["cartas"].append(carta)
-        j2["puntos"]+=carta[1]
-        print(j2["cartas"])
+def inicia_el_juego(jugador1, jugador2) -> dict:
+    jugar(jugador1)
+    jugar(jugador2)
+    return verificaGanador(jugador1, jugador2)
+
+
+def jugar(jugador: dict):
+    nombre = jugador["nombre"]
+    primera_carta = True
+    jugar = True
+    while (jugar):
+        if (not primera_carta):
+            imprimeMano(jugador)
+            if (jugador["humano"] and regla(jugador) and int(input(f"{nombre}: quieres otra carta si:1 no:0 - "))):
+                ronda(jugador)
+            elif (not jugador["humano"] and regla(jugador)):
+                jugar = rondaCPU(jugador)
+            else:
+                jugar = False
+        else:
+            ronda(jugador)
+            primera_carta = False
+
+def ronda(jugador: dict):
+    print("Turno:", jugador["nombre"])
+    carta = pedirCarta()
+    jugador["cartas"].append(carta)
+    jugador["puntos"] += carta[1]
+
+
+def rondaCPU(jugador: dict) -> bool:
+    pedir = random.random() >= 0.5
+    mnj = "si" if pedir else "no"
+    print("quieres otra carta?")
+    print(f"{mnj}")
+    if (pedir):
+        time.sleep(2)
+        ronda(jugador)
+        return True
+    return False
+
+
+def verificaGanador(jugador1: dict, jugador2: dict) -> dict:
+    nombre1 = jugador1["nombre"]
+    nombre2 = jugador2["nombre"]
+    if (regla(jugador1) and regla(jugador2)):
+        if (jugador1['puntos'] == jugador2['puntos']):
+            return {"mensaje": "Empate"}
+        elif (jugador1['puntos'] < jugador2['puntos']):
+            return jugador2
+        else:
+            return jugador1
+    elif (not regla(jugador1) and not regla(jugador2)):
+        return {"mensaje": "Ninguno gana"}
     else:
-        break
-print(j2["cartas"])
+        return jugador1 if regla(jugador1) else jugador2
 
-# verifica ganador
-j1_status = j1['puntos']<=7.5 # pregunta si puede continuar en juego
-j2_status = j2['puntos']<=7.5
 
-if(j1_status and j2_status):
-    if(j1['puntos']==j2['puntos']):
-        print("empate")
-    elif(j1['puntos']<j2['puntos']):
-        print(f"el ganador es = {j2}")
-    else:
-        print(f"el ganador es = {j1}")
-else:
-    print(f"el ganador es = {j1}" if j1 else f"el ganador es = {j2}")
+def regla(jugador: dict) -> bool:
+    return jugador["puntos"] <= 7.5
+
+def imprimeMano(jugador:dict):
+    for carta in jugador["cartas"]:
+        print(carta[0],end=" ")
+    print()
+iniciar()
